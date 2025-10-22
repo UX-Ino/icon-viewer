@@ -96,99 +96,50 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
         }
       }
 
-      const foldersJson = JSON.stringify(Object.keys(dataUrlMap));
-      const dataJson = JSON.stringify(dataUrlMap);
+      const folders = Object.keys(dataUrlMap);
+      const foldersJson = JSON.stringify(folders);
+      const perFolderScripts: string[] = [];
+      for (const folder of folders) {
+        const safeId = encodeURIComponent(folder);
+        const json = JSON.stringify(dataUrlMap[folder]);
+        perFolderScripts.push(`<script type="application/json" id="DATA-${safeId}">${json}</script>`);
+      }
 
       const styleBlock = cssTexts.length ? `<style data-inlined-styles>\n${cssTexts.join('\n\n')}\n</style>` : '';
 
-      const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Icon Viewer Export</title>
-    ${styleBlock}
-  </head>
-  <body>
-    <div class="size-full flex">
-      <div class="w-64 border-r border-border bg-card h-screen flex flex-col">
-        <div class="p-4 border-b border-border flex justify-between items-center">
-          <h2>Icon Viewer</h2>
-        </div>
-        <nav class="flex-1 p-2 overflow-auto" id="lnb"></nav>
-      </div>
-      <div class="flex-1 overflow-auto">
-        <div class="p-6">
-          <div class="mb-4">
-            <h1 id="title">모든 아이콘</h1>
-            <p class="text-muted-foreground"><span id="count">0</span>개의 아이콘</p>
-          </div>
-          <div class="grid grid-cols-8 gap-4" id="grid"></div>
-        </div>
-      </div>
-    </div>
+      const parts: string[] = [];
+      parts.push('<!doctype html>');
+      parts.push('<html>');
+      parts.push('<head>');
+      parts.push('<meta charset="utf-8" />');
+      parts.push('<meta name="viewport" content="width=device-width, initial-scale=1" />');
+      parts.push('<title>Icon Viewer Export</title>');
+      parts.push(styleBlock);
+      parts.push('</head>');
+      parts.push('<body>');
+      parts.push('<div class="size-full flex">');
+      parts.push('<div class="w-64 border-r border-border bg-card h-screen flex flex-col">');
+      parts.push('<div class="p-4 border-b border-border flex justify-between items-center"><h2>Icon Viewer</h2></div>');
+      parts.push('<nav class="flex-1 p-2 overflow-auto" id="lnb"></nav>');
+      parts.push('</div>');
+      parts.push('<div class="flex-1 overflow-auto">');
+      parts.push('<div class="p-6">');
+      parts.push('<div class="mb-4"><h1 id="title">모든 아이콘</h1><p class="text-muted-foreground"><span id="count">0</span>개의 아이콘</p></div>');
+      parts.push('<div class="grid grid-cols-8 gap-4" id="grid"></div>');
+      parts.push('</div></div></div>');
+      parts.push(perFolderScripts.join('\n'));
+      parts.push('<script>');
+      parts.push(`const FOLDERS = ${foldersJson};`);
+      parts.push('let selected = null;');
+      parts.push("function readFolder(name){ const el=document.getElementById('DATA-'+encodeURIComponent(name)); if(!el) return []; try { return JSON.parse(el.textContent||'[]'); } catch { return []; } }");
+      parts.push('function currentIcons(){ if(selected===null){ const all=[]; for(const f of FOLDERS){ all.push(...readFolder(f)); } return all; } return readFolder(selected); }');
+      parts.push("function renderNav(){ const lnb=document.getElementById('lnb'); lnb.innerHTML=''; const allBtn=document.createElement('button'); allBtn.textContent='📁 모든 아이콘'; allBtn.className='w-full text-left px-3 py-2 rounded-md transition-colors '+(selected===null?'bg-accent text-accent-foreground':'hover:bg-accent/50'); allBtn.onclick=()=>{selected=null; render();}; const liAll=document.createElement('div'); liAll.appendChild(allBtn); lnb.appendChild(liAll); FOLDERS.forEach(folder=>{ const btn=document.createElement('button'); btn.textContent='📂 '+folder; btn.className='w-full text-left px-3 py-2 rounded-md transition-colors text-sm '+(selected===folder?'bg-accent text-accent-foreground':'hover:bg-accent/50'); btn.onclick=()=>{selected=folder; render();}; const li=document.createElement('div'); li.appendChild(btn); lnb.appendChild(li); }); }");
+      parts.push("function renderGrid(){ const grid=document.getElementById('grid'); grid.innerHTML=''; const icons=currentIcons(); for(const icon of icons){ const card=document.createElement('div'); card.className='flex flex-col items-center p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer group'; const img=document.createElement('img'); img.src=icon.path; img.alt=icon.name; img.className='w-12 h-12 object-contain mb-2'; const p=document.createElement('p'); p.className='text-xs text-center break-all line-clamp-2 group-hover:text-accent-foreground'; p.textContent=icon.name; card.appendChild(img); card.appendChild(p); grid.appendChild(card);} document.getElementById('count').textContent=String(icons.length); document.getElementById('title').textContent=selected||'모든 아이콘'; }");
+      parts.push('function render(){ renderNav(); renderGrid(); } render();');
+      parts.push('</script>');
+      parts.push('</body></html>');
 
-    <script>
-      const FOLDERS = ${foldersJson};
-      const DATA = ${dataJson};
-      let selected = null; // null = 모든 아이콘
-
-      function renderNav() {
-        const lnb = document.getElementById('lnb');
-        lnb.innerHTML = '';
-        const allBtn = document.createElement('button');
-        allBtn.textContent = '📁 모든 아이콘';
-        allBtn.className = 'w-full text-left px-3 py-2 rounded-md transition-colors ' + (selected === null ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50');
-        allBtn.onclick = () => { selected = null; render(); };
-        const liAll = document.createElement('div');
-        liAll.appendChild(allBtn);
-        lnb.appendChild(liAll);
-        FOLDERS.forEach(folder => {
-          const btn = document.createElement('button');
-          btn.textContent = '📂 ' + folder;
-          btn.className = 'w-full text-left px-3 py-2 rounded-md transition-colors text-sm ' + (selected === folder ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50');
-          btn.onclick = () => { selected = folder; render(); };
-          const li = document.createElement('div');
-          li.appendChild(btn);
-          lnb.appendChild(li);
-        });
-      }
-
-      function currentIcons() {
-        if (selected === null) {
-          const all = [];
-          Object.values(DATA).forEach(arr => all.push(...arr));
-          return all;
-        }
-        return DATA[selected] || [];
-      }
-
-      function renderGrid() {
-        const grid = document.getElementById('grid');
-        grid.innerHTML = '';
-        const icons = currentIcons();
-        icons.forEach((icon) => {
-          const card = document.createElement('div');
-          card.className = 'flex flex-col items-center p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer group';
-          const img = document.createElement('img');
-          img.src = icon.path; img.alt = icon.name; img.className = 'w-12 h-12 object-contain mb-2';
-          const p = document.createElement('p');
-          p.className = 'text-xs text-center break-all line-clamp-2 group-hover:text-accent-foreground';
-          p.textContent = icon.name;
-          card.appendChild(img); card.appendChild(p);
-          grid.appendChild(card);
-        });
-        document.getElementById('count').textContent = String(icons.length);
-        document.getElementById('title').textContent = selected || '모든 아이콘';
-      }
-
-      function render(){ renderNav(); renderGrid(); }
-      render();
-    </script>
-  </body>
-</html>`;
-
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const blob = new Blob(parts, { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
