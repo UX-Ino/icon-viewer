@@ -127,7 +127,9 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
       parts.push('<div class="mb-4"><h1 id="title">모든 아이콘</h1><p class="text-muted-foreground"><span id="count">0</span>개의 아이콘</p></div>');
       parts.push('<div class="grid grid-cols-8 gap-4" id="grid"></div>');
       parts.push('</div></div></div>');
-      parts.push(perFolderScripts.join('\n'));
+      for (const script of perFolderScripts) {
+        parts.push(script);
+      }
       parts.push('<script>');
       parts.push(`const FOLDERS = ${foldersJson};`);
       parts.push('let selected = null;');
