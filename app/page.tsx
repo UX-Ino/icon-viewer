@@ -13,8 +13,8 @@ export default function HomePage() {
   // 내보내기 시점에 현재 아이콘 데이터를 접근할 수 있도록 전역에 노출
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).__ICON_DATA__ = currentIconData;
-      (window as any).__SELECTED_FOLDER__ = selectedFolder;
+      window.__ICON_DATA__ = currentIconData;
+      window.__SELECTED_FOLDER__ = selectedFolder;
     }
   }, [currentIconData, selectedFolder]);
   

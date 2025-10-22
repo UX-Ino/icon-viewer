@@ -48,7 +48,7 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
     });
 
     // 0) 파일명 규칙: 폴더명_아이콘뷰.html
-    const selectedFromGlobal = (window as any).__SELECTED_FOLDER__ as string | null | undefined;
+    const selectedFromGlobal = window.__SELECTED_FOLDER__;
     const baseName = selectedFromGlobal == null || selectedFromGlobal === '' ? '모든아이콘' : selectedFromGlobal;
     const safeName = String(baseName).replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, '_');
 
@@ -66,7 +66,7 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
     }));
 
     // 2) 가능하면 React 의존 없이 동작하는 독립 HTML 생성
-    const globalData = (window as any).__ICON_DATA__ as IconData | undefined;
+    const globalData = window.__ICON_DATA__ as IconData | undefined;
     if (globalData && Object.keys(globalData).length > 0) {
       // 데이터 URL로 사전 변환
       const dataUrlMap: Record<string, { name: string; path: string }[]> = {};
@@ -177,7 +177,6 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       a.href = url;
       a.download = `${safeName}_아이콘뷰.html`;
       document.body.appendChild(a);
@@ -232,7 +231,6 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     a.href = url;
     a.download = `${safeName}_아이콘뷰.html`;
     document.body.appendChild(a);
@@ -255,7 +253,7 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
         <input
           type="file"
           id="folder-upload"
-          webkitdirectory="true"
+          webkitdirectory={true}
           multiple
           onChange={handleFolderSelect}
           className="hidden"

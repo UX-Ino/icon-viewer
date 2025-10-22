@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { IconItem } from "@/data/iconData";
 import { FileImage } from "lucide-react";
 
