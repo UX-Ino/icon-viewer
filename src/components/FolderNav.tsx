@@ -1,6 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { ChangeEvent } from "react";
+import { ChangeEvent, useEffect, useRef } from "react";
 import { IconData } from "@/data/iconData";
 
 interface FolderNavProps {
@@ -11,6 +11,20 @@ interface FolderNavProps {
 }
 
 export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanComplete }: FolderNavProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const input = fileInputRef.current;
+    if (!input) return;
+    try {
+      input.setAttribute('webkitdirectory', '');
+      input.setAttribute('directory', '');
+      input.setAttribute('mozdirectory', '');
+      (input as unknown as { webkitdirectory?: boolean }).webkitdirectory = true;
+      (input as unknown as { directory?: boolean }).directory = true;
+      (input as unknown as { mozdirectory?: boolean }).mozdirectory = true;
+    } catch {}
+  }, []);
 
   const handleFolderSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -253,7 +267,10 @@ export function FolderNav({ folders, selectedFolder, onSelectFolder, onScanCompl
         <input
           type="file"
           id="folder-upload"
+          ref={fileInputRef}
           webkitdirectory={true}
+          directory={true}
+          mozdirectory={true}
           multiple
           onChange={handleFolderSelect}
           className="hidden"
